@@ -267,11 +267,13 @@
             DEFAULT_COUNTRY: "United States"
         };
 
+        // --- SUPABASE SETUP ---
         const SUPABASE_URL = "https://vulnwzdgnnpcxdqvqydm.supabase.co";
         const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_K8ZDFZ48MY0ENZFohwXNVA_0NlAJ4OS";
 
-        // --- APP LOGIC ---
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+        // Initialize Supabase Client with a unique name to avoid conflicts
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
         let currentQty = 1;
 
         function init() {
@@ -333,20 +335,24 @@
                 country: CONFIG.DEFAULT_COUNTRY,
                 product_name: CONFIG.PRODUCT_NAME,
                 product_variant: document.getElementById('variantSelect').value,
-                quantity: currentQty,
+                quantity: parseInt(currentQty),
                 notes: formData.get('notes'),
                 status: "pending"
             };
 
             try {
-                const { error } = await supabase.from('orders').insert([orderPayload]);
+                const { data, error } = await supabaseClient
+                    .from('orders')
+                    .insert([orderPayload]);
                 
-                if (error) throw error;
+                if (error) {
+                    console.error("Supabase Error:", error.message);
+                    throw error;
+                }
 
                 document.getElementById('successOverlay').classList.remove('hidden');
             } catch (err) {
-                alert("Sorry, there was an error placing your order. Please try again or contact support.");
-                console.error(err);
+                alert(`Order Error: ${err.message || 'Check browser console for details'}`);
             } finally {
                 btn.disabled = false;
                 loader.classList.add('hidden');
